@@ -222,6 +222,54 @@
       transition: width 1s ease;
     }
 
+    /* PROTOCOL PANEL */
+    .protocol-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface2);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      flex-shrink: 0;
+      overflow: hidden;
+      opacity: 0;
+      max-height: 0;
+      transition: opacity 0.4s ease, max-height 0.4s ease;
+    }
+
+    .protocol-bar.visible {
+      opacity: 1;
+      max-height: 60px;
+    }
+
+    .protocol-signal {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .protocol-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .protocol-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      line-height: 1.4;
+    }
+
     /* MESSAGES */
     .messages-wrap {
       position: relative;
@@ -791,6 +839,12 @@
     </div>
   </div>
 
+  <div class="protocol-bar" id="protocolBar">
+    <div class="protocol-signal"></div>
+    <div class="protocol-label">Mission Protocol</div>
+    <div class="protocol-text" id="protocolText"></div>
+  </div>
+
   <div class="messages-wrap" id="messagesWrap">
     <div class="empty-state" id="emptyState">
       <div class="empty-icon">
@@ -986,6 +1040,25 @@
     setScore('scoreFatigue',   'barFatigue',   'descFatigue',   data.fatigue_final,   'fatigue');
     setScore('scoreClarity',   'barClarity',   'descClarity',   data.clarity_final,   'clarity');
     setScore('scoreStability', 'barStability', 'descStability', data.stabilityScore,  'stability', 100);
+
+    displayProtocol(data.stress_final, data.fatigue_final, data.clarity_final, data.stabilityScore);
+  }
+
+  function displayProtocol(stress, fatigue, clarity, stability) {
+    let text;
+    if (stress >= 7 && clarity <= 4) {
+      text = 'BREATHWORK RESET — Two sharp inhales through the nose, long exhale through the mouth. Run twice.';
+    } else if (fatigue >= 7 && stability < 50) {
+      text = 'GROUNDING SEQUENCE — Plant both feet. Scan upward from feet to shoulders. Notice tension without fixing it.';
+    } else if (fatigue >= 6 && stress >= 4 && stress <= 6) {
+      text = 'MOVEMENT RESET — Stand up. Roll shoulders back twice. Drop them down. Plant your feet.';
+    } else if (stress < 5 && fatigue < 5 && clarity > 6 && stability > 65) {
+      text = 'STATUS: GO — Systems nominal. No intervention required.';
+    } else {
+      text = 'SENSORY RESET — Look up. Name 3 things you see, 1 you hear, 1 you feel.';
+    }
+    document.getElementById('protocolText').textContent = text;
+    document.getElementById('protocolBar').classList.add('visible');
   }
 
   function resetScores() {
@@ -998,6 +1071,8 @@
     ['descStress','descFatigue','descClarity','descStability'].forEach(id => {
       document.getElementById(id).textContent = '';
     });
+    document.getElementById('protocolBar').classList.remove('visible');
+    document.getElementById('protocolText').textContent = '';
   }
 
   async function sendMessage() {
