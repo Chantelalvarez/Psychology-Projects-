@@ -468,6 +468,216 @@
       color: var(--accent);
       background: var(--accent-dim);
     }
+
+    /* RECORD BUTTON */
+    .btn-record {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--bg);
+      background: var(--accent);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .btn-record:hover { background: #00ffb0; }
+
+    .btn-log {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .btn-log:hover { border-color: var(--accent-mid); color: var(--accent); }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface2);
+      border: 1px solid var(--accent-mid);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      padding: 10px 20px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* LOG PANEL */
+    .log-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .log-overlay.open { opacity: 1; pointer-events: all; }
+
+    .log-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 400px;
+      max-width: 100vw;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      z-index: 51;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    .log-panel.open { transform: translateX(0); }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .log-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .log-actions { display: flex; gap: 8px; }
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .btn-icon:hover { border-color: var(--accent-mid); color: var(--accent); }
+
+    .log-entries {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .log-entries::-webkit-scrollbar { width: 4px; }
+    .log-entries::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .log-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+    }
+
+    .log-entry {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      animation: fadeUp 0.2s ease;
+    }
+    .log-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .log-entry-date {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-mid);
+      letter-spacing: 0.06em;
+    }
+    .log-entry-session {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+    .log-entry-scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .log-score-item { text-align: center; }
+    .log-score-label {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .log-score-val {
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+    .log-score-val.warn { color: var(--warn); }
+    .log-score-val.danger { color: var(--danger); }
+    .log-score-val.dim { color: var(--text-dim); }
+
+    .log-entry-note {
+      font-size: 12px;
+      color: var(--text-mid);
+      line-height: 1.5;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      margin-top: 4px;
+    }
+    .log-entry-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      padding: 2px 0;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .btn-delete:hover { color: var(--danger); }
   </style>
 </head>
 <body>
@@ -482,9 +692,27 @@
     </div>
     <div class="header-right">
       <div class="session-badge">SESSION <span id="sessionId">—</span></div>
+      <button class="btn-log" onclick="openLog()">Log</button>
+      <button class="btn-record" onclick="recordEntry()">Record</button>
       <button class="btn-new" onclick="newSession()">New Session</button>
     </div>
   </header>
+
+  <!-- Log Panel -->
+  <div class="log-overlay" id="logOverlay" onclick="closeLog()"></div>
+  <div class="log-panel" id="logPanel">
+    <div class="log-header">
+      <div class="log-title">Feeling Log</div>
+      <div class="log-actions">
+        <button class="btn-icon" onclick="exportLog()">Export</button>
+        <button class="btn-icon" onclick="closeLog()">Close</button>
+      </div>
+    </div>
+    <div class="log-entries" id="logEntries"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
 
   <!-- Scores bar - revealed when assessment completes -->
   <div class="scores-bar" id="scoresBar">
@@ -722,13 +950,168 @@
 
     } catch (err) {
       hideTyping();
-      appendMessage('assistant', 'Connection error — check your webhook URL.');
+      appendMessage('assistant', 'Connection error — please try again.');
       console.error(err);
     }
 
     isLoading = false;
     document.getElementById('sendBtn').disabled = false;
     input.focus();
+  }
+
+  // ── LOG ─────────────────────────────────────────────────
+
+  function getLog() {
+    return JSON.parse(localStorage.getItem('mm_log') || '[]');
+  }
+
+  function saveLog(entries) {
+    localStorage.setItem('mm_log', JSON.stringify(entries));
+  }
+
+  function recordEntry() {
+    const stress   = document.getElementById('scoreStress').textContent;
+    const fatigue  = document.getElementById('scoreFatigue').textContent;
+    const clarity  = document.getElementById('scoreClarity').textContent;
+    const stability = document.getElementById('scoreStability').textContent;
+    const hasScores = stress !== '—';
+
+    const entry = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      sessionId: sessionId,
+      scores: hasScores ? {
+        stress: stress,
+        fatigue: fatigue,
+        clarity: clarity,
+        stability: stability
+      } : null
+    };
+
+    const log = getLog();
+    log.unshift(entry);
+    saveLog(log);
+
+    showToast(hasScores ? 'Session recorded' : 'Check-in recorded (no scores yet)');
+  }
+
+  function openLog() {
+    renderLog();
+    document.getElementById('logOverlay').classList.add('open');
+    document.getElementById('logPanel').classList.add('open');
+  }
+
+  function closeLog() {
+    document.getElementById('logOverlay').classList.remove('open');
+    document.getElementById('logPanel').classList.remove('open');
+  }
+
+  function renderLog() {
+    const entries = getLog();
+    const container = document.getElementById('logEntries');
+
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="log-empty">No entries yet.<br>Click Record after a check-in.</div>';
+      return;
+    }
+
+    container.innerHTML = entries.map(entry => {
+      const date = new Date(entry.timestamp);
+      const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+      let scoresHtml = '';
+      if (entry.scores) {
+        const s = entry.scores;
+        scoresHtml = `
+          <div class="log-entry-scores">
+            <div class="log-score-item">
+              <span class="log-score-label">Stress</span>
+              <span class="log-score-val ${scoreClass(s.stress, false)}">${s.stress}</span>
+            </div>
+            <div class="log-score-item">
+              <span class="log-score-label">Fatigue</span>
+              <span class="log-score-val ${scoreClass(s.fatigue, false)}">${s.fatigue}</span>
+            </div>
+            <div class="log-score-item">
+              <span class="log-score-label">Clarity</span>
+              <span class="log-score-val ${scoreClass(s.clarity, false)}">${s.clarity}</span>
+            </div>
+            <div class="log-score-item">
+              <span class="log-score-label">Stability</span>
+              <span class="log-score-val">${s.stability}</span>
+            </div>
+          </div>`;
+      } else {
+        scoresHtml = '<div class="log-entry-note">Recorded without scores</div>';
+      }
+
+      return `
+        <div class="log-entry">
+          <div class="log-entry-header">
+            <div>
+              <div class="log-entry-date">${dateStr} · ${timeStr}</div>
+              <div class="log-entry-session">${entry.sessionId}</div>
+            </div>
+          </div>
+          ${scoresHtml}
+          <div class="log-entry-footer">
+            <button class="btn-delete" onclick="deleteEntry(${entry.id})">Delete</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function scoreClass(val, isStability) {
+    const n = parseFloat(val);
+    if (isNaN(n)) return 'dim';
+    if (!isStability) {
+      if (n >= 8) return 'danger';
+      if (n >= 6) return 'warn';
+    }
+    return '';
+  }
+
+  function deleteEntry(id) {
+    const log = getLog().filter(e => e.id !== id);
+    saveLog(log);
+    renderLog();
+  }
+
+  function exportLog() {
+    const entries = getLog();
+    if (entries.length === 0) { showToast('No entries to export'); return; }
+
+    const rows = [['Date', 'Time', 'Session', 'Stress', 'Fatigue', 'Clarity', 'Stability']];
+    entries.forEach(e => {
+      const d = new Date(e.timestamp);
+      rows.push([
+        d.toLocaleDateString('en-GB'),
+        d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        e.sessionId,
+        e.scores?.stress ?? '',
+        e.scores?.fatigue ?? '',
+        e.scores?.clarity ?? '',
+        e.scores?.stability ?? ''
+      ]);
+    });
+
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `missionmind-log-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Log exported');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
   }
 </script>
 </body>
