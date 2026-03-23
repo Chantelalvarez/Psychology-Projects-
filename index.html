@@ -542,15 +542,8 @@
   </div>
 
 <script>
-  // ── CONFIG ──────────────────────────────────────────────
-  // ⚠️ localhost won't work when hosted on S3
-  // Use your ngrok URL: https://xxxx.ngrok.io/webhook/ebcf2936-3fa5-42b6-bb91-030dae4eef3a
-  // OR your n8n cloud URL if you're on n8n.cloud
-  const WEBHOOK_URL = "https://arjun-rivetless-waywardly.ngrok-free.dev/webhook/ebcf2936-3fa5-42b6-bb91-030dae4eef3a";
-  // ────────────────────────────────────────────────────────
-
   let sessionId = generateSessionId();
-  let messages = []; // full conversation history sent to n8n
+  let messages = [];
   let isLoading = false;
 
   document.getElementById('sessionId').textContent = sessionId;
@@ -710,26 +703,19 @@
     showTyping();
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: sessionId,
-          userId: 'user01', // replace with real auth
-          messages: messages,
-          latestMessage: text
-        })
+        body: JSON.stringify({ messages: messages })
       });
 
       const data = await response.json();
       hideTyping();
 
-      // Expecting: { reply: "...", complete: bool, stress_final, fatigue_final, clarity_final, stabilityScore }
-      const reply = data.reply || data.message || "I received your message.";
+      const reply = data.reply || "I received your message.";
       appendMessage('assistant', reply);
       messages.push({ role: 'assistant', content: reply });
 
-      // If n8n signals the assessment is complete, show scores
       if (data.complete) {
         displayScores(data);
       }
