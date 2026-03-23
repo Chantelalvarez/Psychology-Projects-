@@ -109,6 +109,15 @@
       margin-top: 1px;
     }
 
+    .logo-antares {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-top: 2px;
+      opacity: 0.6;
+    }
+
     .header-right {
       display: flex;
       align-items: center;
@@ -189,6 +198,14 @@
 
     .score-value.warn { color: var(--warn); }
     .score-value.danger { color: var(--danger); }
+
+    .score-desc {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
 
     .score-bar-fill {
       height: 2px;
@@ -721,6 +738,7 @@
       <div>
         <div class="logo-text">MissionMind</div>
         <div class="logo-sub">Cognitive State Monitor</div>
+        <div class="logo-antares">by ANTARESLABS</div>
       </div>
     </div>
     <div class="header-right">
@@ -750,21 +768,25 @@
     <div class="score-cell">
       <div class="score-label">Stress</div>
       <div class="score-value" id="scoreStress">—</div>
+      <div class="score-desc" id="descStress"></div>
       <div class="score-bar-fill"><div class="score-bar-inner" id="barStress" style="width:0%"></div></div>
     </div>
     <div class="score-cell">
       <div class="score-label">Fatigue</div>
       <div class="score-value" id="scoreFatigue">—</div>
+      <div class="score-desc" id="descFatigue"></div>
       <div class="score-bar-fill"><div class="score-bar-inner" id="barFatigue" style="width:0%"></div></div>
     </div>
     <div class="score-cell">
       <div class="score-label">Clarity</div>
       <div class="score-value" id="scoreClarity">—</div>
+      <div class="score-desc" id="descClarity"></div>
       <div class="score-bar-fill"><div class="score-bar-inner" id="barClarity" style="width:0%"></div></div>
     </div>
     <div class="score-cell">
       <div class="score-label">Stability Score</div>
       <div class="score-value" id="scoreStability">—</div>
+      <div class="score-desc" id="descStability"></div>
       <div class="score-bar-fill"><div class="score-bar-inner" id="barStability" style="width:0%"></div></div>
     </div>
   </div>
@@ -919,28 +941,51 @@
       .replace(/\n/g, '<br>');
   }
 
+  const scoreDescriptors = {
+    stress:    [[3,'Nominal'],[6,'Elevated'],[10,'Critical']],
+    fatigue:   [[3,'Fully Fuelled'],[6,'Reserves Low'],[10,'Depleted']],
+    clarity:   [[3,'Signal Weak'],[6,'Intermittent'],[10,'Signal Clear']],
+    stability: [[39,'Off-Nominal'],[64,'Marginal'],[100,'Go']],
+  };
+
+  function getDescriptor(type, value) {
+    for (const [threshold, label] of scoreDescriptors[type]) {
+      if (value <= threshold) return label;
+    }
+    return '';
+  }
+
   function displayScores(data) {
     const bar = document.getElementById('scoresBar');
     bar.classList.add('visible');
 
-    const setScore = (id, barId, value, max = 10) => {
+    const setScore = (id, barId, descId, value, type, max = 10) => {
       const el = document.getElementById(id);
       el.textContent = value ?? '—';
-      // Color coding
       if (id !== 'scoreStability') {
         if (value >= 8) el.className = 'score-value danger';
         else if (value >= 6) el.className = 'score-value warn';
         else el.className = 'score-value';
+      }
+      if (value != null) {
+        const desc = document.getElementById(descId);
+        desc.textContent = getDescriptor(type, value);
+        // Match descriptor colour to the score's colour class
+        if (id !== 'scoreStability') {
+          desc.style.color = value >= 8 ? 'var(--danger)' : value >= 6 ? 'var(--warn)' : 'var(--accent)';
+        } else {
+          desc.style.color = value < 40 ? 'var(--danger)' : value < 65 ? 'var(--warn)' : 'var(--accent)';
+        }
       }
       setTimeout(() => {
         document.getElementById(barId).style.width = `${((value ?? 0) / max) * 100}%`;
       }, 100);
     };
 
-    setScore('scoreStress', 'barStress', data.stress_final);
-    setScore('scoreFatigue', 'barFatigue', data.fatigue_final);
-    setScore('scoreClarity', 'barClarity', data.clarity_final);
-    setScore('scoreStability', 'barStability', data.stabilityScore, 100);
+    setScore('scoreStress',    'barStress',    'descStress',    data.stress_final,    'stress');
+    setScore('scoreFatigue',   'barFatigue',   'descFatigue',   data.fatigue_final,   'fatigue');
+    setScore('scoreClarity',   'barClarity',   'descClarity',   data.clarity_final,   'clarity');
+    setScore('scoreStability', 'barStability', 'descStability', data.stabilityScore,  'stability', 100);
   }
 
   function resetScores() {
@@ -949,6 +994,9 @@
     });
     ['barStress','barFatigue','barClarity','barStability'].forEach(id => {
       document.getElementById(id).style.width = '0%';
+    });
+    ['descStress','descFatigue','descClarity','descStability'].forEach(id => {
+      document.getElementById(id).textContent = '';
     });
   }
 
