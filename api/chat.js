@@ -29,7 +29,9 @@ export default async function handler(req, res) {
 
     if (!anthropicRes.ok) {
       const errData = await anthropicRes.json();
-      return res.status(anthropicRes.status).json({ error: errData.error?.message || 'API error' });
+      const errMsg = errData.error?.message || `API error ${anthropicRes.status}`;
+      console.error('Anthropic API error:', anthropicRes.status, errMsg);
+      return res.status(200).json({ reply: `[Error ${anthropicRes.status}]: ${errMsg}`, complete: false });
     }
 
     const data = await anthropicRes.json();
@@ -59,6 +61,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Handler error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(200).json({ reply: `[Server error]: ${err.message}`, complete: false });
   }
 }
