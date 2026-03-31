@@ -776,6 +776,70 @@
       transition: color 0.2s;
     }
     .btn-delete:hover { color: var(--danger); }
+
+    /* MEDIA */
+    .log-media-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .log-media-item {
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+      aspect-ratio: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+    .log-media-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .log-media-thumb:hover { opacity: 0.8; }
+    .log-media-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .btn-media-del {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      background: rgba(0,0,0,0.75);
+      border: none;
+      color: var(--text-mid);
+      font-size: 9px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .btn-media-del:hover { color: var(--danger); }
+    .btn-add-media {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      padding: 2px 0;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      margin-right: auto;
+    }
+    .btn-add-media:hover { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -807,6 +871,9 @@
     </div>
     <div class="log-entries" id="logEntries"></div>
   </div>
+
+  <!-- Hidden media file input -->
+  <input type="file" id="mediaInput" accept="image/*,video/*" multiple style="display:none" onchange="handleMediaFiles(this)">
 
   <!-- Toast -->
   <div class="toast" id="toast"></div>
@@ -1120,6 +1187,84 @@
     input.focus();
   }
 
+  // ── MEDIA (IndexedDB) ────────────────────────────────────
+
+  const GC_DB = 'gc_media_db';
+  const GC_STORE = 'media';
+  let currentMediaEntryId = null;
+
+  function openMediaDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(GC_DB, 1);
+      req.onupgradeneeded = e => {
+        e.target.result.createObjectStore(GC_STORE, { keyPath: 'id' });
+      };
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+
+  function saveMediaBlob(id, blob, mediaType) {
+    return openMediaDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(GC_STORE, 'readwrite');
+      tx.objectStore(GC_STORE).put({ id, blob, mediaType });
+      tx.oncomplete = resolve;
+      tx.onerror = e => reject(e.target.error);
+    }));
+  }
+
+  function getMediaBlob(id) {
+    return openMediaDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(GC_STORE, 'readonly');
+      const req = tx.objectStore(GC_STORE).get(id);
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror = e => reject(e.target.error);
+    }));
+  }
+
+  function deleteMediaBlob(id) {
+    return openMediaDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(GC_STORE, 'readwrite');
+      tx.objectStore(GC_STORE).delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror = e => reject(e.target.error);
+    }));
+  }
+
+  function attachMedia(entryId) {
+    currentMediaEntryId = entryId;
+    const input = document.getElementById('mediaInput');
+    input.value = '';
+    input.click();
+  }
+
+  async function handleMediaFiles(input) {
+    if (!currentMediaEntryId || !input.files.length) return;
+    const log = getLog();
+    const entry = log.find(e => e.id === currentMediaEntryId);
+    if (!entry) return;
+    if (!entry.mediaIds) entry.mediaIds = [];
+    for (const file of input.files) {
+      const mediaId = `m_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      await saveMediaBlob(mediaId, file, file.type.startsWith('video/') ? 'video' : 'image');
+      entry.mediaIds.push(mediaId);
+    }
+    saveLog(log);
+    showToast(`${input.files.length} file${input.files.length > 1 ? 's' : ''} added`);
+    renderLog();
+  }
+
+  async function deleteMediaItem(entryId, mediaId) {
+    await deleteMediaBlob(mediaId);
+    const log = getLog();
+    const entry = log.find(e => e.id === entryId);
+    if (entry) {
+      entry.mediaIds = (entry.mediaIds || []).filter(id => id !== mediaId);
+      saveLog(log);
+    }
+    renderLog();
+  }
+
   // ── LOG ─────────────────────────────────────────────────
 
   function getLog() {
@@ -1167,7 +1312,7 @@
     document.getElementById('logPanel').classList.remove('open');
   }
 
-  function renderLog() {
+  async function renderLog() {
     const entries = getLog();
     const container = document.getElementById('logEntries');
 
@@ -1216,11 +1361,34 @@
             </div>
           </div>
           ${scoresHtml}
+          <div class="log-media-grid" id="media-grid-${entry.id}"></div>
           <div class="log-entry-footer">
+            <button class="btn-add-media" onclick="attachMedia(${entry.id})">+ Add Media</button>
             <button class="btn-delete" onclick="deleteEntry(${entry.id})">Delete</button>
           </div>
         </div>`;
     }).join('');
+
+    // Load media async into grids
+    for (const entry of entries) {
+      if (!entry.mediaIds || entry.mediaIds.length === 0) continue;
+      const grid = document.getElementById(`media-grid-${entry.id}`);
+      if (!grid) continue;
+      for (const mediaId of entry.mediaIds) {
+        const record = await getMediaBlob(mediaId);
+        if (!record) continue;
+        const url = URL.createObjectURL(record.blob);
+        const item = document.createElement('div');
+        item.className = 'log-media-item';
+        if (record.mediaType === 'video') {
+          item.innerHTML = `<video class="log-media-video" src="${url}" controls></video>`;
+        } else {
+          item.innerHTML = `<img class="log-media-thumb" src="${url}" onclick="window.open('${url}','_blank')" title="View full size">`;
+        }
+        item.innerHTML += `<button class="btn-media-del" onclick="deleteMediaItem(${entry.id},'${mediaId}')" title="Remove">✕</button>`;
+        grid.appendChild(item);
+      }
+    }
   }
 
   function scoreClass(val, isStability) {
@@ -1233,9 +1401,15 @@
     return '';
   }
 
-  function deleteEntry(id) {
-    const log = getLog().filter(e => e.id !== id);
-    saveLog(log);
+  async function deleteEntry(id) {
+    const log = getLog();
+    const entry = log.find(e => e.id === id);
+    if (entry && entry.mediaIds) {
+      for (const mediaId of entry.mediaIds) {
+        await deleteMediaBlob(mediaId);
+      }
+    }
+    saveLog(log.filter(e => e.id !== id));
     renderLog();
   }
 
