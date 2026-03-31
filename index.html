@@ -451,6 +451,76 @@
 
     .send-btn svg { width: 15px; height: 15px; }
 
+    .attach-btn {
+      width: 34px;
+      height: 34px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      margin-bottom: 2px;
+      color: var(--text-dim);
+    }
+    .attach-btn:hover { border-color: var(--accent-mid); color: var(--accent); }
+    .attach-btn svg { width: 15px; height: 15px; }
+
+    .media-preview-strip {
+      display: none;
+      gap: 6px;
+      padding: 8px 12px 0;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .media-preview-strip.has-items { display: flex; }
+    .media-preview-strip::-webkit-scrollbar { height: 3px; }
+    .media-preview-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .preview-item {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .preview-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .preview-video-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .preview-del {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: rgba(0,0,0,0.8);
+      border: none;
+      color: #fff;
+      font-size: 8px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .preview-del:hover { background: var(--danger); }
+
     .mic-btn {
       width: 34px;
       height: 34px;
@@ -874,8 +944,9 @@
     <div class="log-entries" id="logEntries"></div>
   </div>
 
-  <!-- Hidden media file input -->
+  <!-- Hidden media file inputs -->
   <input type="file" id="mediaInput" accept="image/*,video/*" multiple style="display:none" onchange="handleMediaFiles(this)">
+  <input type="file" id="sessionMediaInput" accept="image/*,video/*" multiple style="display:none" onchange="handleSessionMedia(this)">
 
   <!-- Toast -->
   <div class="toast" id="toast"></div>
@@ -933,8 +1004,15 @@
   </div>
 
   <div class="input-area">
+    <div class="media-preview-strip" id="previewStrip"></div>
     <div class="input-wrap">
       <textarea id="userInput" rows="1" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="attach-btn" onclick="openSessionMediaPicker()" title="Attach image or video">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </button>
       <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="Voice input">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="2" width="6" height="12" rx="3"/>
@@ -986,6 +1064,8 @@
       </div>`;
     document.getElementById('scoresBar').classList.remove('visible');
     resetScores();
+    pendingMediaIds = [];
+    renderPreviewStrip();
   }
 
   function autoResize(el) {
@@ -1189,6 +1269,58 @@
     input.focus();
   }
 
+  // ── SESSION MEDIA (attach before recording) ──────────────
+
+  let pendingMediaIds = [];
+
+  function openSessionMediaPicker() {
+    const input = document.getElementById('sessionMediaInput');
+    input.value = '';
+    input.click();
+  }
+
+  async function handleSessionMedia(input) {
+    if (!input.files.length) return;
+    for (const file of input.files) {
+      const mediaId = `m_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      await saveMediaBlob(mediaId, file, file.type.startsWith('video/') ? 'video' : 'image');
+      pendingMediaIds.push(mediaId);
+    }
+    renderPreviewStrip();
+    showToast(`${input.files.length} file${input.files.length > 1 ? 's' : ''} attached`);
+  }
+
+  async function renderPreviewStrip() {
+    const strip = document.getElementById('previewStrip');
+    strip.innerHTML = '';
+    if (pendingMediaIds.length === 0) {
+      strip.classList.remove('has-items');
+      return;
+    }
+    strip.classList.add('has-items');
+    for (const mediaId of pendingMediaIds) {
+      const record = await getMediaBlob(mediaId);
+      if (!record) continue;
+      const url = URL.createObjectURL(record.blob);
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+      if (record.mediaType === 'video') {
+        item.innerHTML = `<video class="preview-video-thumb" src="${url}" muted></video>`;
+      } else {
+        item.innerHTML = `<img class="preview-thumb" src="${url}">`;
+      }
+      const mediaIdCopy = mediaId;
+      item.innerHTML += `<button class="preview-del" onclick="removePreviewItem('${mediaIdCopy}')">✕</button>`;
+      strip.appendChild(item);
+    }
+  }
+
+  async function removePreviewItem(mediaId) {
+    await deleteMediaBlob(mediaId);
+    pendingMediaIds = pendingMediaIds.filter(id => id !== mediaId);
+    renderPreviewStrip();
+  }
+
   // ── MEDIA (IndexedDB) ────────────────────────────────────
 
   const GC_DB = 'gc_media_db';
@@ -1293,12 +1425,16 @@
         reserves: reserves,
         clarity: clarity,
         missionIntegrity: missionIntegrity
-      } : null
+      } : null,
+      mediaIds: [...pendingMediaIds]
     };
 
     const log = getLog();
     log.unshift(entry);
     saveLog(log);
+
+    pendingMediaIds = [];
+    renderPreviewStrip();
 
     showToast(hasScores ? 'Session recorded' : 'Check-in recorded (no scores yet)');
   }
