@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MissionMind</title>
+  <title>GroundControl</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -784,7 +784,7 @@
     <div class="logo">
       <div class="logo-icon"></div>
       <div>
-        <div class="logo-text">MissionMind</div>
+        <div class="logo-text">GroundControl</div>
         <div class="logo-sub">Cognitive State Monitor</div>
         <div class="logo-antares">by ANTARESLABS</div>
       </div>
@@ -814,16 +814,16 @@
   <!-- Scores bar - revealed when assessment completes -->
   <div class="scores-bar" id="scoresBar">
     <div class="score-cell">
-      <div class="score-label">Stress</div>
-      <div class="score-value" id="scoreStress">—</div>
-      <div class="score-desc" id="descStress"></div>
-      <div class="score-bar-fill"><div class="score-bar-inner" id="barStress" style="width:0%"></div></div>
+      <div class="score-label">Load</div>
+      <div class="score-value" id="scoreLoad">—</div>
+      <div class="score-desc" id="descLoad"></div>
+      <div class="score-bar-fill"><div class="score-bar-inner" id="barLoad" style="width:0%"></div></div>
     </div>
     <div class="score-cell">
-      <div class="score-label">Fatigue</div>
-      <div class="score-value" id="scoreFatigue">—</div>
-      <div class="score-desc" id="descFatigue"></div>
-      <div class="score-bar-fill"><div class="score-bar-inner" id="barFatigue" style="width:0%"></div></div>
+      <div class="score-label">Reserves</div>
+      <div class="score-value" id="scoreReserves">—</div>
+      <div class="score-desc" id="descReserves"></div>
+      <div class="score-bar-fill"><div class="score-bar-inner" id="barReserves" style="width:0%"></div></div>
     </div>
     <div class="score-cell">
       <div class="score-label">Clarity</div>
@@ -832,10 +832,10 @@
       <div class="score-bar-fill"><div class="score-bar-inner" id="barClarity" style="width:0%"></div></div>
     </div>
     <div class="score-cell">
-      <div class="score-label">Stability Score</div>
-      <div class="score-value" id="scoreStability">—</div>
-      <div class="score-desc" id="descStability"></div>
-      <div class="score-bar-fill"><div class="score-bar-inner" id="barStability" style="width:0%"></div></div>
+      <div class="score-label">Mission Integrity</div>
+      <div class="score-value" id="scoreMissionIntegrity">—</div>
+      <div class="score-desc" id="descMissionIntegrity"></div>
+      <div class="score-bar-fill"><div class="score-bar-inner" id="barMissionIntegrity" style="width:0%"></div></div>
     </div>
   </div>
 
@@ -947,7 +947,7 @@
 
     const div = document.createElement('div');
     div.className = `msg ${role}`;
-    const avatarLabel = role === 'assistant' ? 'MM' : 'YOU';
+    const avatarLabel = role === 'assistant' ? 'GC' : 'YOU';
     div.innerHTML = `
       <div>
         <div style="display:flex; align-items:flex-start; gap:12px; ${role === 'user' ? 'flex-direction:row-reverse;' : ''}">
@@ -970,7 +970,7 @@
     div.innerHTML = `
       <div>
         <div style="display:flex; align-items:flex-start; gap:12px;">
-          <div class="msg-avatar">MM</div>
+          <div class="msg-avatar">GC</div>
           <div class="msg-bubble typing-indicator">
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
@@ -996,10 +996,10 @@
   }
 
   const scoreDescriptors = {
-    stress:    [[3,'Nominal'],[6,'Elevated'],[10,'Critical']],
-    fatigue:   [[3,'Fully Fuelled'],[6,'Reserves Low'],[10,'Depleted']],
-    clarity:   [[3,'Signal Weak'],[6,'Intermittent'],[10,'Signal Clear']],
-    stability: [[39,'Off-Nominal'],[64,'Marginal'],[100,'Go']],
+    load:             [[3,'Nominal'],[6,'Elevated'],[10,'Critical']],
+    reserves:         [[3,'Fully Fuelled'],[6,'Reserves Low'],[10,'Depleted']],
+    clarity:          [[3,'Signal Weak'],[6,'Intermittent'],[10,'Signal Clear']],
+    missionIntegrity: [[39,'Off-Nominal'],[64,'Marginal'],[10,'Go']],
   };
 
   function getDescriptor(type, value) {
@@ -1016,7 +1016,7 @@
     const setScore = (id, barId, descId, value, type, max = 10) => {
       const el = document.getElementById(id);
       el.textContent = value ?? '—';
-      if (id !== 'scoreStability') {
+      if (id !== 'scoreMissionIntegrity') {
         if (value >= 8) el.className = 'score-value danger';
         else if (value >= 6) el.className = 'score-value warn';
         else el.className = 'score-value';
@@ -1024,8 +1024,7 @@
       if (value != null) {
         const desc = document.getElementById(descId);
         desc.textContent = getDescriptor(type, value);
-        // Match descriptor colour to the score's colour class
-        if (id !== 'scoreStability') {
+        if (id !== 'scoreMissionIntegrity') {
           desc.style.color = value >= 8 ? 'var(--danger)' : value >= 6 ? 'var(--warn)' : 'var(--accent)';
         } else {
           desc.style.color = value < 40 ? 'var(--danger)' : value < 65 ? 'var(--warn)' : 'var(--accent)';
@@ -1036,23 +1035,23 @@
       }, 100);
     };
 
-    setScore('scoreStress',    'barStress',    'descStress',    data.stress_final,    'stress');
-    setScore('scoreFatigue',   'barFatigue',   'descFatigue',   data.fatigue_final,   'fatigue');
-    setScore('scoreClarity',   'barClarity',   'descClarity',   data.clarity_final,   'clarity');
-    setScore('scoreStability', 'barStability', 'descStability', data.stabilityScore,  'stability', 100);
+    setScore('scoreLoad',             'barLoad',             'descLoad',             data.load,             'load');
+    setScore('scoreReserves',         'barReserves',         'descReserves',         data.reserves,         'reserves');
+    setScore('scoreClarity',          'barClarity',          'descClarity',          data.clarity,          'clarity');
+    setScore('scoreMissionIntegrity', 'barMissionIntegrity', 'descMissionIntegrity', data.missionIntegrity, 'missionIntegrity', 10);
 
-    displayProtocol(data.stress_final, data.fatigue_final, data.clarity_final, data.stabilityScore);
+    displayProtocol(data.load, data.reserves, data.clarity, data.missionIntegrity);
   }
 
-  function displayProtocol(stress, fatigue, clarity, stability) {
+  function displayProtocol(load, reserves, clarity, missionIntegrity) {
     let text;
-    if (stress >= 7 && clarity <= 4) {
+    if (load >= 7 && clarity <= 4) {
       text = 'BREATHWORK RESET — Two sharp inhales through the nose, long exhale through the mouth. Run twice.';
-    } else if (fatigue >= 7 && stability < 50) {
+    } else if (reserves >= 7 && missionIntegrity < 5) {
       text = 'GROUNDING SEQUENCE — Plant both feet. Scan upward from feet to shoulders. Notice tension without fixing it.';
-    } else if (fatigue >= 6 && stress >= 4 && stress <= 6) {
+    } else if (reserves >= 6 && load >= 4 && load <= 6) {
       text = 'MOVEMENT RESET — Stand up. Roll shoulders back twice. Drop them down. Plant your feet.';
-    } else if (stress < 5 && fatigue < 5 && clarity > 6 && stability > 65) {
+    } else if (load < 5 && reserves < 5 && clarity > 6 && missionIntegrity > 6) {
       text = 'STATUS: GO — Systems nominal. No intervention required.';
     } else {
       text = 'SENSORY RESET — Look up. Name 3 things you see, 1 you hear, 1 you feel.';
@@ -1062,13 +1061,13 @@
   }
 
   function resetScores() {
-    ['scoreStress','scoreFatigue','scoreClarity','scoreStability'].forEach(id => {
+    ['scoreLoad','scoreReserves','scoreClarity','scoreMissionIntegrity'].forEach(id => {
       document.getElementById(id).textContent = '—';
     });
-    ['barStress','barFatigue','barClarity','barStability'].forEach(id => {
+    ['barLoad','barReserves','barClarity','barMissionIntegrity'].forEach(id => {
       document.getElementById(id).style.width = '0%';
     });
-    ['descStress','descFatigue','descClarity','descStability'].forEach(id => {
+    ['descLoad','descReserves','descClarity','descMissionIntegrity'].forEach(id => {
       document.getElementById(id).textContent = '';
     });
     document.getElementById('protocolBar').classList.remove('visible');
@@ -1124,29 +1123,29 @@
   // ── LOG ─────────────────────────────────────────────────
 
   function getLog() {
-    return JSON.parse(localStorage.getItem('mm_log') || '[]');
+    return JSON.parse(localStorage.getItem('gc_log') || '[]');
   }
 
   function saveLog(entries) {
-    localStorage.setItem('mm_log', JSON.stringify(entries));
+    localStorage.setItem('gc_log', JSON.stringify(entries));
   }
 
   function recordEntry() {
-    const stress   = document.getElementById('scoreStress').textContent;
-    const fatigue  = document.getElementById('scoreFatigue').textContent;
-    const clarity  = document.getElementById('scoreClarity').textContent;
-    const stability = document.getElementById('scoreStability').textContent;
-    const hasScores = stress !== '—';
+    const load             = document.getElementById('scoreLoad').textContent;
+    const reserves         = document.getElementById('scoreReserves').textContent;
+    const clarity          = document.getElementById('scoreClarity').textContent;
+    const missionIntegrity = document.getElementById('scoreMissionIntegrity').textContent;
+    const hasScores = load !== '—';
 
     const entry = {
       id: Date.now(),
       timestamp: new Date().toISOString(),
       sessionId: sessionId,
       scores: hasScores ? {
-        stress: stress,
-        fatigue: fatigue,
+        load: load,
+        reserves: reserves,
         clarity: clarity,
-        stability: stability
+        missionIntegrity: missionIntegrity
       } : null
     };
 
@@ -1188,20 +1187,20 @@
         scoresHtml = `
           <div class="log-entry-scores">
             <div class="log-score-item">
-              <span class="log-score-label">Stress</span>
-              <span class="log-score-val ${scoreClass(s.stress, false)}">${s.stress}</span>
+              <span class="log-score-label">Load</span>
+              <span class="log-score-val ${scoreClass(s.load, false)}">${s.load}</span>
             </div>
             <div class="log-score-item">
-              <span class="log-score-label">Fatigue</span>
-              <span class="log-score-val ${scoreClass(s.fatigue, false)}">${s.fatigue}</span>
+              <span class="log-score-label">Reserves</span>
+              <span class="log-score-val ${scoreClass(s.reserves, false)}">${s.reserves}</span>
             </div>
             <div class="log-score-item">
               <span class="log-score-label">Clarity</span>
               <span class="log-score-val ${scoreClass(s.clarity, false)}">${s.clarity}</span>
             </div>
             <div class="log-score-item">
-              <span class="log-score-label">Stability</span>
-              <span class="log-score-val">${s.stability}</span>
+              <span class="log-score-label">Mission Integrity</span>
+              <span class="log-score-val">${s.missionIntegrity}</span>
             </div>
           </div>`;
       } else {
@@ -1244,17 +1243,17 @@
     const entries = getLog();
     if (entries.length === 0) { showToast('No entries to export'); return; }
 
-    const rows = [['Date', 'Time', 'Session', 'Stress', 'Fatigue', 'Clarity', 'Stability']];
+    const rows = [['Date', 'Time', 'Session', 'Load', 'Reserves', 'Clarity', 'Mission Integrity']];
     entries.forEach(e => {
       const d = new Date(e.timestamp);
       rows.push([
         d.toLocaleDateString('en-GB'),
         d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
         e.sessionId,
-        e.scores?.stress ?? '',
-        e.scores?.fatigue ?? '',
+        e.scores?.load ?? '',
+        e.scores?.reserves ?? '',
         e.scores?.clarity ?? '',
-        e.scores?.stability ?? ''
+        e.scores?.missionIntegrity ?? ''
       ]);
     });
 
@@ -1263,7 +1262,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `missionmind-log-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `groundcontrol-log-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('Log exported');
